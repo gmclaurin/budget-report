@@ -1,0 +1,124 @@
+Sub Main()
+'=========
+'REGEX SUB
+'This identifies and extracts three specific string patterns using RegEx
+'=========
+    Dim strPattern1 As String
+    Dim strReplace1 As String
+    Dim strPattern2 As String
+    Dim strReplace2 As String
+    Dim strPattern3 As String
+    Dim strReplace3 As String
+    Dim regEx As New RegExp
+    Dim strInput1 As String
+    Dim strInput2 As String
+    Dim strInput3 As String
+    Dim Myrange As Range
+    
+    Set Myrange = ActiveSheet.Range("A1", Cells(Rows.Count, "A").End(xlUp))  'Assumes file opened into Column A; range to row 5000 arbitrarily defined (will exceed row count of file)
+         
+        For Each A In Myrange
+            strPattern1 = "(\d{6}|\d{3}[X]{3})\D+(?:((\d|\.|\,|\s)+))" 'RegEx group 1: (\d{6}|d{3}[X]{3}) is 6-digit account number or 6-character account summary (e.g. 531110 or 531XXX); \D+ is non-digit string; Regex group 2:(?:((\d|\.|\,|\s)+)) picks up all the dollar value strings
+            
+        If strPattern1 <> "" Then
+                strInput1 = A.Value
+                strReplace1 = "$1 $2" 'strReplace1 value is Group 1 and Group 2 -- this essentially takes the fund detail level and excludes the account description
+        
+            With regEx
+                .Global = True
+                .MultiLine = True
+                .IgnoreCase = True
+                .Pattern = strPattern1
+            End With
+        
+            If regEx.Test(strInput1) Then
+                A.Offset(0, 3) = regEx.Replace(strInput1, strReplace1)
+            Else
+                A.Offset(0, 3) = ""
+            End If
+        End If
+        
+        Next
+               
+        For Each B In Myrange
+            strPattern2 = "(\d{5}).+(ATBD701)"
+            
+        If strPattern2 <> "" Then
+                strInput2 = B.Value
+                strReplace2 = "$1"
+        
+            With regEx
+                .Global = True
+                .MultiLine = True
+                .Pattern = strPattern2
+            End With
+        
+            If regEx.Test(strInput2) Then
+                B.Offset(0, 1) = regEx.Replace(strInput2, strReplace2)
+            Else
+                B.Offset(0, 1) = ""
+            End If
+                     
+        End If
+        
+        Next
+                     
+        For Each C In Myrange
+            strPattern3 = "(\d{4}).+(DETAIL REPORT BY FUND)"
+            
+            If strPattern3 <> "" Then
+                strInput3 = C.Value
+                strReplace3 = "$1"
+        
+            With regEx
+                .Global = True
+                .MultiLine = True
+                .Pattern = strPattern3
+            End With
+        
+            If regEx.Test(strInput3) Then
+                C.Offset(0, 2) = regEx.Replace(strInput3, strReplace3)
+            Else
+                C.Offset(0, 2) = ""
+            End If
+            End If
+    
+Next
+End Sub
+
+'========
+'Copy and fill down sub
+'This sub sets up the formatting to convert to a pivot table -- copies and fills down a value until the next value
+'========
+Sub Filldown()
+Set Myrange = ActiveSheet.Range("A1", Cells(Rows.Count, "A").End(xlUp))
+
+Myrange.Offset(0, 1).Select
+For Each D In Selection.Cells
+    If D.Value <> "" Then
+        lastVal = D.Value
+    Else
+        D.Value = lastVal
+    End If
+Next D
+
+Myrange.Offset(0, 2).Select
+For Each E In Selection.Cells
+    If E.Value <> "" Then
+        lastVal = E.Value
+    Else
+        E.Value = lastVal
+    End If
+Next E
+
+'========
+'Sub text-to-columns
+'This breaks out the account/dollar ranges into separate columns
+'========
+'    Range(Selection, Selection.End(xlDown)).Select
+'    Selection.TextToColumns Destination:=Range("D14"), DataType:=xlDelimited, _
+'        TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=True, Tab:=False, _
+'        Semicolon:=False, Comma:=False, Space:=True, Other:=False, FieldInfo _
+'        :=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1), Array(6, 1), _
+'        Array(7, 1), Array(8, 1), Array(9, 1)), TrailingMinusNumbers:=True
+End Sub
