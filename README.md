@@ -1,4 +1,1 @@
-# hello-world
-First repository
-This is my first entry to a README file.
-Guide reference at: https://guides.github.com/activities/hello-world/
+This respository contains an evolving VBA script intended to extract raw data from a state-issued budget report for the purpose of facilitating analysis by the accountants of the financial reporting division of a large public research university.
