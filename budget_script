@@ -15,24 +15,24 @@ Sub Main()
     Dim strInput3 As String
     Dim Myrange As Range
     
-    Set Myrange = ActiveSheet.Range("A1", Cells(Rows.Count, "A").End(xlUp))  'Assumes file opened into Column A; range to row 5000 arbitrarily defined (will exceed row count of file)
+    Set Myrange = ActiveSheet.Range("A1", Cells(Rows.Count, "A").End(xlUp))  'Assumes BD701 file opened into Column A
          
         For Each A In Myrange
-            strPattern1 = "(\d{6}|\d{3}[X]{3})\D+(?:((\d|\.|\,|\s)+))" 'RegEx group 1: (\d{6}|d{3}[X]{3}) is 6-digit account number or 6-character account summary (e.g. 531110 or 531XXX); \D+ is non-digit string; Regex group 2:(?:((\d|\.|\,|\s)+)) picks up all the dollar value strings
-            
+            'strPattern1 = "(\d{6}|\d{3}[X]{3})\D+(?:((\d|\.|\,|\s)+))" 'RegEx group 1: (\d{6}|d{3}[X]{3}) is 6-digit account number or 6-character account summary (e.g. 531110 or 531XXX); \D+ is non-digit string; Regex group 2:(?:((\d|\.|\,|\s)+)) picks up all the dollar value strings
+            strPattern1 = "(\d{6}|\d{3}[X]{3})((?:\D+1%\D+)|\D+)(?:((\d|\.|\,|\s)+))"
         If strPattern1 <> "" Then
                 strInput1 = A.Value
-                strReplace1 = "$1 $2" 'strReplace1 value is Group 1 and Group 2 -- this essentially takes the fund detail level and excludes the account description
+                strReplace1 = "$1 $3" 'strReplace1 value is Group 1 and Group 2 -- this essentially takes the fund detail level and excludes the account description
         
-            With regEx
+            With regEx 'Introduces regEx functionality
                 .Global = True
                 .MultiLine = True
                 .IgnoreCase = True
-                .Pattern = strPattern1
+                .Pattern = strPattern1 'Defines pattern in use as strPattern1
             End With
         
             If regEx.Test(strInput1) Then
-                A.Offset(0, 3) = regEx.Replace(strInput1, strReplace1)
+                A.Offset(0, 3) = regEx.Replace(strInput1, strReplace1) 'if Regex matches strInput1 (
             Else
                 A.Offset(0, 3) = ""
             End If
@@ -111,14 +111,54 @@ For Each E In Selection.Cells
     End If
 Next E
 
-'========
-'Sub text-to-columns
+End Sub
+Sub Transfer()
+Set Myrange = ActiveSheet.Range("B1", Cells(Rows.Count, "D").End(xlUp))
+Myrange.Select
+Selection.Copy
+    Sheets.Add After:=ActiveSheet
+    ActiveSheet.Paste
+End Sub
+Sub delRow()
+
+With ActiveSheet
+    .Select
+    firstrow = .UsedRange.Cells(1).Row
+    lastrow = .UsedRange.Rows(.UsedRange.Rows.Count).Row
+    
+    For lrow = lastrow To firstrow Step -1
+    
+    With .Cells(lrow, "C")
+    If .Value = "" Then
+    .EntireRow.Delete
+    End If
+    End With
+    Next lrow
+    
+    For lrow = lastrow To firstrow Step -1
+    With .Cells(lrow, "B")
+    If .Value = "16022" Then
+    .EntireRow.Delete
+    End If
+    End With
+    Next lrow
+        
+End With
+
+End Sub
+
+Sub texttocolumns()
 'This breaks out the account/dollar ranges into separate columns
 '========
-'    Range(Selection, Selection.End(xlDown)).Select
-'    Selection.TextToColumns Destination:=Range("D14"), DataType:=xlDelimited, _
-'        TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=True, Tab:=False, _
-'        Semicolon:=False, Comma:=False, Space:=True, Other:=False, FieldInfo _
-'        :=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1), Array(6, 1), _
-'        Array(7, 1), Array(8, 1), Array(9, 1)), TrailingMinusNumbers:=True
+    Set Myrange = ActiveSheet.Range("C1", Cells(Rows.Count, "C").End(xlUp))
+    With Myrange
+        .Select
+        Selection.texttocolumns DataType:=xlDelimited, ConsecutiveDelimiter:=True, Space:=True, TrailingMinusNumbers:=True
+        
+    'Selection.texttocolumns Destination:=Range("D14"), DataType:=xlDelimited, _
+    '    TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=True, Tab:=False, _
+    '    Semicolon:=False, Comma:=False, Space:=True, Other:=False, FieldInfo _
+    '    :=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1), Array(6, 1), _
+    '    Array(7, 1), Array(8, 1), Array(9, 1)), TrailingMinusNumbers:=True
+    End With
 End Sub
